@@ -44,10 +44,43 @@ int main(int argc, char *argv[]) {
     if (sockfd < 0) { return 1; }
 
     // If i < argc, we have some leftover arguments => single command mode
+    
     if (i < argc) {
-        // Print prompt
-        std::cout << host << ":" << port << "> ";
-        std::fflush(stdout);
+        // Collect the command and its arguments from argv.
+        std::vector<std::string> args;
+
+        while (i < argc) {
+            args.emplace_back(argv[i++]);
+        }
+
+        // Build the RESP request.
+        std::string cmd = myClient.buildRESPCommand(args);
+
+        // Send the complete command, handling partial sends.
+        size_t totalSent = 0;
+
+        while (totalSent < cmd.size()) {
+            ssize_t n = send(
+                sockfd,
+                cmd.data() + totalSent,
+                cmd.size() - totalSent,
+                0
+            );
+
+            if (n <= 0) {
+                std::cerr << "(Error) Failed to send command.\n";
+                close(sockfd);
+                return 1;
+            }
+
+            totalSent += static_cast<size_t>(n);
+        }
+
+        // Read and print the server's response.
+        bool success = myClient.parseAndPrintRedisReply(sockfd);
+
+        close(sockfd);
+        return success ? 0 : 1;
     }
 
     // Otherwise, REPL mode

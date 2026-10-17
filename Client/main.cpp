@@ -19,7 +19,8 @@ The main entry: parse arguments, connect, then either run REPL or single command
 int main(int argc, char *argv[]) {
     // Defaults
     std::string host = "127.0.0.1";
-    int port = 6379;
+    // int port = 6379;
+    int port = 6378;
 
     // Check for -h host and -p port
     int i = 1;
